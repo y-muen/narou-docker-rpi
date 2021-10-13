@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Raspbian Kindlegen compatible Script
+INPUTFILE="$3"
+OUTPUTFILE=`echo "$3"|sed 's/\.epub/\.mobi/g'`
+/usr/bin/ebook-convert "${INPUTFILE}" "${OUTPUTFILE}"

@@ -1,11 +1,13 @@
-FROM ruby:2.7.0-alpine
+FROM ruby:2.7.0
 
 LABEL maintainer "whiteleaf <2nd.leaf@gmail.com>"
 
-ENV NAROU_VERSION 3.5.1
+ENV NAROU_VERSION 3.8.0
 ENV AOZORAEPUB3_VERSION 1.1.0b55Q
 ENV AOZORAEPUB3_FILE AozoraEpub3-${AOZORAEPUB3_VERSION}
-ENV KINDLEGEN_FILE kindlegen_linux_2.6_i386_v2_9.tar.gz
+ENV LANG C.UTF-8
+ENV LANGUAGE en_US:
+ENV LC_ALL C.UTF-8
 
 WORKDIR /temp
 
@@ -15,29 +17,40 @@ RUN set -x \
      && unzip -q ${AOZORAEPUB3_FILE} \
      && mv ${AOZORAEPUB3_FILE} /aozoraepub3 \
      # install openjdk11
-     && apk --no-cache add openjdk11 --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community \
-     # install kindlegen
-     && wget http://kindlegen.s3.amazonaws.com/${KINDLEGEN_FILE} \
-     && tar -xzf ${KINDLEGEN_FILE} \
-     && mv kindlegen /aozoraepub3 \
-     # install Narou.rb
-     && apk --update --no-cache --virtual .build-deps add \
-     build-base \
+     && apt-get update \
+     && apt-get install -y openjdk-11-jdk \
+     calibre \
+     epub-utils \
+     libebook-tools-perl \
+     libepub-dev \
+     libepub0 \
+     calibre \
+     poppler-data \
+     fonts-takao-gothic \
+     fonts-takao-mincho \
      make \
      gcc \
-     && gem install narou -v ${NAROU_VERSION} --no-document \
-     && apk del --purge .build-deps \
-     # setting AozoraEpub3
-     && mkdir .narousetting \
-     && narou init -p /aozoraepub3 -l 1.8 \
-     && rm -rf /temp
+     cron \
+     # install Narou.rb
+     && gem install narou -v ${NAROU_VERSION} --no-document
 
 WORKDIR /novel
 
 COPY init.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/init.sh
 
+# install kindlegen alternative
+COPY kindlegen /aozoraepub3
+RUN chmod 777 /aozoraepub3/kindlegen \
+     # setting AozoraEpub3
+     && mkdir .narousetting \
+     && narou init -p /aozoraepub3 -l 1.8 \
+     && rm -rf /temp
+
 EXPOSE 33000-33001
 
+RUN echo "0 1 * * * curl -X POST -d '' http://127.0.0.1:33000/api/update > /var/log/cron1.log" > cron.conf \
+     && crontab cron.conf
+
 ENTRYPOINT ["init.sh"]
-CMD ["narou", "web", "-np", "33000"]
+CMD service cron start && service cron reload && narou web -np 33000 

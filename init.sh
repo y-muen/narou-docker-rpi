@@ -1,4 +1,5 @@
 #!/bin/sh
+/etc/init.d/cron start
 
 if [ ! -e /novel/.narou ]; then
   mkdir .narou
@@ -18,6 +19,7 @@ if [ ! -e /novel/.narou ]; then
 
   narou s convert.no-open=true
   narou s device=kindle
+  narou s convert.no-strip=true
 fi
 
 exec "$@"

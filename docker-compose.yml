@@ -1,13 +1,20 @@
-version: "3.7"
+---
+version: "2"
 
 services:
-  app:
-    build: .
-    image: narou
-    command: ["narou", "web", "-np", "33000"]
+  narou:
+    image: my/narou-rpi
+    container_name: narou
+    environment:
+      - PUID=puid
+      - PGID=pgid
+      - TZ=Asia/Tokyo
+    # command: 
     volumes:
-      - .:/novel:cached
-    tty: true
-    stdin_open: true
+      - /path/to/narou:/novel:cached
+    # tty: true
+    # stdin_open: true
     ports:
-      - "127.0.0.1:33000-33001:33000-33001"
+      - 33000:33000
+      - 33001:33001
+    restart: always
